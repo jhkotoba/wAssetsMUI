@@ -2,38 +2,63 @@ const fs = require("fs");
 const request = require("request");
 
 //전역상수
-global.PUI = {
+global.MUI = {
     GATEWAY_PORT: "9000",
     GATEWAY_IP: "127.0.0.1",
     GATEWAY_IP_PORT: "127.0.0.1:9000",
     GATEWAY_URI: "http://127.0.0.1:9000",
     PORT: "9050",
     IP: "127.0.0.1",
-    //URI: "http://127.0.0.1:9020"
+    PAGE_CD: {}
 }
-
-//전역변수
-global.wAssets = {};
-global.wAssets.pageCd = {};
 
 //유틸
 global.UTIL = {
-    // convert: text => {
-    //     if(text == null || text == undefined) return "";
-    //     else return text.replace(/{contextPath}/gi, PUI.URI);
-    // },
-    
-    isEmpty: data => {
-        if(data === "" || data === null || data === undefined) return true;
-        else return false;
+
+    //빈값 체크
+    isEmpty: value => {
+        if(typeof value === "string"){
+            if(value.trim() === "") return true;
+            else return false;
+        }else{
+            if(value === undefined || value === null) return true;
+            else return false;
+        }
     },
 
+    //값여부 체크
+    isNotEmpty: data => !UTIL.isEmpty(data),
+
+    //페이지코드 가져오기
     getPageCode: pageCd => {
         if(pageCd === "MAIN" || UTIL.isEmpty(pageCd)) return "/main/main";
-        else return wAssets.pageCd[pageCd].pagePath + "/" + wAssets.pageCd[pageCd].pageFile;
+        else return MUI.PAGE_CD[pageCd].pagePath + "/" + MUI.PAGE_CD[pageCd].pageFile;
+    },
+
+    //게이트웨이 확인
+    isGateway: host => host === MUI.GATEWAY_IP_PORT ? true : false,
+
+    //게이트웨이 확인(request)
+    isGatewayReq: request => UTIL.getHost(request) === MUI.GATEWAY_IP_PORT ? true : false,
+
+    //헤더에서 HOST 추출
+    getHost: request => {
+        if(UTIL.isEmpty(request.headers)){
+            return "";
+        }else if(UTIL.isEmpty(request.headers.forwarded)){
+            return "";
+        }else{
+            let host = request.headers.forwarded.replace(/"/g, "").split(";");
+            if(host.length > 1){
+                return host[1].replace("host=", "").replace("localhost", "127.0.0.1");
+            }else{
+                return "";
+            }
+        }
     }
 }
 
+//초기 세팅
 const init = {
     express: null,
     app: null,    
@@ -43,7 +68,6 @@ const init = {
 
         this.fileImport("src");
         this.initGlobalData();
-        this.initFunction();
     },
 
     //정적 리소스 임포트
@@ -58,49 +82,11 @@ const init = {
     //전역데이터 세팅
     initGlobalData: function(){
         //페이지코드 세팅  
-        request.get(PUI.GATEWAY_URI + "/api/admin/getPageCodeList?mduTpCd=ASSETS", (error, response, body) => {
+        request.get(MUI.GATEWAY_URI + "/api/admin/getPageCodeList?mduTpCd=ASSETS", (error, response, body) => {
             JSON.parse(body).forEach(page => {
-                wAssets.pageCd[page.pageCd] = page;
+                MUI.PAGE_CD[page.pageCd] = page;
             });
         });
-    },
-
-    //전역함수 세팅
-    initFunction: function(){
-        global.wFunction = {};
-
-        //빈값 체크
-        wFunction.isEmpty = value => {
-            if(typeof value === "string"){
-                if(value.trim() === "") return true;
-                else return false;
-            }else{
-                if(value === undefined || value === null) return true;
-                else return false;
-            }
-        };
-
-        //게이트웨이 확인
-        wFunction.isGateway = host => host === PUI.GATEWAY_IP_PORT ? true : false;
-
-        //게이트웨이 확인(request)
-        wFunction.isGatewayReq = request => wFunction.getHost(request) === PUI.GATEWAY_IP_PORT ? true : false;
-
-        //헤더에서 HOST 추출
-        wFunction.getHost = request => {
-            if(wFunction.isEmpty(request.headers)){
-                return "";
-            }else if(wFunction.isEmpty(request.headers.forwarded)){
-                return "";
-            }else{
-                let host = request.headers.forwarded.replace(/"/g, "").split(";");
-                if(host.length > 1){
-                    return host[1].replace("host=", "").replace("localhost", "127.0.0.1");
-                }else{
-                    return "";
-                }
-            }
-        };
     }
 }
 module.exports = init;
