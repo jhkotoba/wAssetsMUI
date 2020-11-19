@@ -25,11 +25,7 @@ router.get("/assets/:pattern", (request, response) => {
                     request.params.pattern,
                     request.params.pattern + ".html"
                     ),
-                "UTF-8", (err, text) => {
-                    console.log(err);
-                    console.log(text);
-                response.send(text)
-            });
+                "UTF-8", (err, text) => response.send(text));
         }catch{
             fs.readFile(path.join(__dirname, "src", "assets", "index.html"), "UTF-8", (err, text) => response.send(text));
         }
