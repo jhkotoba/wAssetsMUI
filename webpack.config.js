@@ -3,7 +3,7 @@ const port = process.env.PORT || 9050;
 
 module.exports = {
     mode: 'development',
-    entry: './src/assets/main/index.js',
+    entry: './src/assets/index/index.js',
     output: {
       filename: 'bundle.[hash].js'
     },
@@ -31,7 +31,7 @@ module.exports = {
       },
       plugins: [
         new HtmlWebpackPlugin({
-          template: 'src/assets/main/index.html',
+          template: 'src/assets/index/index.html',
         })
       ],
       devServer: {
